@@ -91,9 +91,6 @@ var handleMessage = function(ws_id, object) {
     });
 
   } else if (object.type == 'update') {
-    console.log(object.id);
-    console.log(object.position);
-
     // add current_position
     redis_client.hmset(object.id, object.position);
 

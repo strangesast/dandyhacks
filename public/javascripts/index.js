@@ -184,10 +184,10 @@ socket.onerror = function(e) {
   console.log(e);
 }
 
+var text_element = document.getElementById('output');
 var canvas_element = document.getElementById('canvas-element');
-var everyone_canvas_element = document.getElementById('everyone');
-var playerBoard = new Board(canvas_element, 400, 400);
-var everyoneBoard = new Board(everyone_canvas_element, 400, 400);
+var parentDims = canvas_element.parentElement.getBoundingClientRect()
+var playerBoard = new Board(canvas_element, parentDims.width, parentDims.height);
 
 var activePlayer = null;
 document.onkeydown = function(key_event) {
@@ -206,3 +206,10 @@ document.onkeydown = function(key_event) {
     playerBoard.movePlayerTo(activePlayer, [0, 10], false);
   }
 };
+
+window.addEventListener("deviceorientation", function(orientation_event) {
+  //text_element.textContent = [orientation_event.alpha, orientation_event.beta, orientation_event.gamma].join(', ');
+  var vals = [Math.round(orientation_event.gamma*10)/50, Math.round(orientation_event.beta*10)/50];
+  text_element.textContent = vals;
+  playerBoard.movePlayerTo(activePlayer, vals, false);
+}, true);
