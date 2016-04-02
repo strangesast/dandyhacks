@@ -1,0 +1,18 @@
+{
+  "name": "dandyhacks",
+  "authors": [
+    "Sam Zagrobelny <strangesast@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/strangesast/dandyhacks",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "three.js": "threejs#*"
+  }
+}
