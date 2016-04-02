@@ -30,6 +30,15 @@ var Board = class Board {
     this.players[user.id] = user;
   }
 
+  removePlayer(user) {
+    console.log('deleted');
+    if(user.id in this.players) {
+      delete this.players[user.id];
+      return true;
+    }
+    return false;
+  }
+
   movePlayerTo(player, position, absolute) {
     var curx = player.position.x;
     var cury = player.position.y;
@@ -140,13 +149,23 @@ socket.onmessage = function(messageEvent) {
 
     } else if (parsed.type === 'update') {
       parsed.objects.forEach(function(elem) {
+        var player;
         if(elem.id in playerBoard.players) {
-          playerBoard.players[elem.id].changePosition([elem.position.x, elem.position.y]);
+          player = playerBoard.players[elem.id];
+
         } else {
-          newplayer = new User(elem.id);
-          newplayer.position = elem.position;
-          playerBoard.addPlayer(newplayer);
+          player = new User(elem.id);
+          playerBoard.addPlayer(player);
         }
+        if('position' in elem) {
+          player.changePosition([elem.position.x, elem.position.y]);
+
+        } else if ('deleted' in elem) {
+          console.log(playerBoard)
+          console.log(player)
+          playerBoard.removePlayer(player);
+        }
+
         playerBoard.redraw();
       });
     }

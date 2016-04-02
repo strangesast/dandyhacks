@@ -51,10 +51,14 @@ var connectionListener = function(ws) {
   ws.on('close', function() {
     console.log('close, removing client...');
 
+    var objects = Object.keys(clients[sockid]).map(function(elem) {
+      return {id: elem, 'deleted': true};
+    });
+
     delete sockets[sockid]
     delete clients[sockid]
 
-    broadcast({'type' : 'message', 'data' : 'client closed (' + clients.length + ' left)'}, []);
+    broadcast({'type' : 'update', 'objects' : objects}, []);
   });
 };
 
