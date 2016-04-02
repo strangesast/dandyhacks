@@ -4,6 +4,10 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var mongoose = require('mongoose');
+mongoose.Promise = Promise
+
+var config = require('./config');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -24,6 +28,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
 app.use('/users', users);
+
+mongoose.connect(config.databaseUrl, function(err) {
+  if (err) {
+    console.log("failed to connect to mongo database (" + config.databaseUrl + ")");
+  } else {
+    console.log("connected to mongodb at " + config.databaseUrl);
+  }
+  return;
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
