@@ -75,10 +75,9 @@ var handleMessage = function(ws_id, object) {
     return User.findById(object.id).then(function(result) {
       console.log('user found!');
       console.log(result);
-
     });
   } else if (object.type == 'init' && object.temp_id) {
-    var user = new User()
+    var user = new User();
     return user.save().then(function(doc) {
       clients[ws_id][user.id] = user;
       return {

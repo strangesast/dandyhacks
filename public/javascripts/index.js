@@ -8,6 +8,17 @@ var Board = class Board {
     this.playerRadius = 20;
 
     this.players = {};
+
+    window.onresize = function(_this) {
+      return function(e) {
+        var box = _this.canvas.parentElement.getBoundingClientRect();
+        _this.width = box.width;
+        _this.height = box.height;
+        _this.canvas.width = box.width;
+        _this.canvas.height = box.height;
+        _this.redraw()
+      };
+    }(this);
   }
 
   redraw() {
