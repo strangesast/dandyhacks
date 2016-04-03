@@ -36,12 +36,6 @@ var connectionListener = function(ws) {
     handleMessage(sockid, parsed).then(function(result) {
       ws.send(JSON.stringify(result));
 
-      for(var prop in sockets) {
-        if(sockets[prop] !== ws) {
-          sockets[prop].send(JSON.stringify(clients));
-        }
-      }
-
     }).catch(function(err) {
       ws.send(JSON.stringify({'type': 'error', 'data':err.message}));
 
@@ -73,8 +67,15 @@ var broadcast = function(message, except) {
 var handleMessage = function(ws_id, object) {
   if(object.type == 'init' && object.id) {
     return User.findById(object.id).then(function(result) {
-      console.log('user found!');
-      console.log(result);
+      if(result) {
+        clients[ws_id][result._id] = user;
+        return {
+          'type': 'init',
+          'data' : {
+            'id' : result._id,
+          }
+        };
+      }
     });
   } else if (object.type == 'init' && object.temp_id) {
     var user = new User();
@@ -94,7 +95,7 @@ var handleMessage = function(ws_id, object) {
     redis_client.hmset(object.id, object.position);
 
     // get all object positions
-    positions = Object.keys(clients).reduce(function(previous_val, sock_id) {
+    var positions = Object.keys(clients).reduce(function(previous_val, sock_id) {
       // elem = socket_id
       var users = clients[sock_id];
       return previous_val.concat(Object.keys(users).map(function(user_id) {
@@ -108,13 +109,14 @@ var handleMessage = function(ws_id, object) {
         });
       }));
     }, []);
-    Promise.all(positions).then(function(results) {
+    return Promise.all(positions).then(function(results) {
       broadcast({'type' : 'update', 'objects' : results}, [object.id]);
+      return {};
+
     }).catch(function(err) {
       console.log(err);
     });
 
-    return Promise.resolve({'data': 'ok'});
   } else {
     // unknown
     return Promise.reject('invalid object');

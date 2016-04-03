@@ -1,211 +1,106 @@
-var Board = class Board {
-  constructor(canvas, width, height) {
-    canvas.width = width;
-    canvas.height = height;
-    this.canvas = canvas;
-    this.width = width;
-    this.height = height;
-    this.playerRadius = 20;
-
-    this.players = {};
-
-    window.onresize = function(_this) {
-      return function(e) {
-        var box = _this.canvas.parentElement.getBoundingClientRect();
-        _this.width = box.width;
-        _this.height = box.height;
-        _this.canvas.width = box.width;
-        _this.canvas.height = box.height;
-        _this.redraw()
-      };
-    }(this);
-  }
-
-  redraw() {
-    var ctx = this.canvas.getContext('2d');
-    ctx.fillStyle = 'grey';
-    ctx.fillRect(0, 0, this.width, this.height);
-    ctx.fillStyle = 'black';
-    for(var user_id in this.players) {
-      var user = this.players[user_id];
-      var x = user.position.x;
-      var y = user.position.y;
-      ctx.beginPath();
-      ctx.arc(x, y, this.playerRadius, 0, 2*Math.PI);
-      ctx.fill()
-    }
-  }
-
-  addPlayer(user) {
-    // for now make last-added player default
-    this.players[user.id] = user;
-  }
-
-  removePlayer(user) {
-    console.log('deleted');
-    if(user.id in this.players) {
-      delete this.players[user.id];
-      return true;
-    }
-    return false;
-  }
-
-  movePlayerTo(player, position, absolute) {
-    var curx = player.position.x;
-    var cury = player.position.y;
-    console.log("current: " + [curx, cury]);
-    var newx, newy;
-    if(absolute) {
-      newx = Math.min(Math.max(position[0], this.playerRadius), this.width-this.playerRadius);
-      newy = Math.min(Math.max(position[1], this.playerRadius), this.height-this.playerRadius);
-    } else {
-      newx = Math.min(Math.max(curx+position[0], this.playerRadius), this.width-this.playerRadius);
-      newy = Math.min(Math.max(cury+position[1], this.playerRadius), this.height-this.playerRadius);
-    }
-    player.submitPositionChange([newx, newy]);
-  }
-}
-
-var User = class User {
-  constructor(id) {
-    this.id = id;
-    this.ready = false;
-    User.users[this.id] = this;
-    this.position = {
-      x: 0,
-      y: 0
-    }
-    this.maxFrequency = 100; // ms
-    this.lastUpdateRequestedAt = 0;
-    this.pendingUpdateRequest = null;
-  }
-  submitPositionChange(position) {
-    // limit update requests to 'maxFrequency' ms
-    var delay = Math.max(this.lastUpdateRequestedAt + this.maxFrequency - Date.now(), 0);
-
-    clearTimeout(this.pendingUpdateRequest);
-    this.pendingUpdateRequest = function(_this) {
-      return setTimeout(function() {
-        _this.lastUpdateRequestedAt = Date.now();
-        sendMessage({'id' : _this.id, 'type' : 'update', 'position' : {'x':position[0], 'y':position[1]}});
-      }, delay);
-    }(this);
-  }
-
-  changePosition(position) {
-    console.log("actual: " + position);
-    //console.log("new position: " + position.join(", "));
-    this.position.x = Number(position[0]);
-    this.position.y = Number(position[1]);
-  }
-
-  static generateRandomId() {
-    return Math.round(Math.random()*100);
-  }
-
-  static getUserById(id) {
-    if(id in User.users) {
-      return User.users[id];
-    } else {
-      return null;
-    }
-  }
-}
-
-User.users = {};
-//  socket.send(JSON.stringify({
-//    'type' : 'init'
-//  }));
-//
-//  socket.onmessage = function(messageEvent) {
-//    console.log('message:' + messageEvent.data);
-//    console.log(messageEvent);
-//  };
-
-// initiate socket connection
-var socketAddress = "ws://" + window.location.host + "/sockets";
-var socket = new WebSocket(socketAddress);
-var sendMessage = function(message) {
-  socket.send(JSON.stringify(message));
-};
-var temp_ids = [];
-
-
-socket.onopen = function(e) {
-  // create user || use existing user from localStorage
-  var currentUser = localStorage.getItem("user");
+var socketOpenListener = function(e) {
+  console.log('socket opened!');
+  // create player || use existing player from localStorage
+  clearInterval(reconnectInterval);
+  var currentPlayer = localStorage.getItem("player");
   initMessage = {'type' : 'init'};
-  if(currentUser) {
-    initMessage.id = currentUser;
-    new User(currentUser);
+  if(currentPlayer) {
+    initMessage.id = currentPlayer;
+    new Player(currentPlayer);
+  } else if (activePlayer != null) {
+    initMessage.id = activePlayer.id
+
   } else {
-    temp_id = User.generateRandomId();
+    temp_id = Player.generateRandomId();
     temp_ids.push(temp_id);
     initMessage.temp_id = temp_id;
-    new User(temp_id);
+    new Player(temp_id);
   }
   sendMessage(initMessage);
 };
 
-socket.onmessage = function(messageEvent) {
+var socketMessageListener = function(messageEvent) {
   var parsed;
   try {
     parsed = JSON.parse(messageEvent.data);
   } catch (e) {
     parsed = null;
+    console.error("invalid json!");
+    console.error(messageEvent.data);
+    return;
   }
-  if(parsed) {
-    var user;
-    if(parsed.type === 'init' && (user = User.getUserById(parsed.data.id))) {
-      //console.log(user);
+  var player;
+  if(parsed.type === 'init' && (player = Player.getPlayerById(parsed.data.id))) {
+    // player exists already, you're good
 
-    } else if (parsed.type === 'init' && (user = User.getUserById(temp_ids.pop()))) {
-      // swap out temp id from User 'list'
-      delete User.users[user.id];
-      user.id = parsed.data.id;
-      User.users[user.id] = user;
+  } else if (parsed.type === 'init' && (player = Player.getPlayerById(temp_ids.pop()))) {
+    // swap out temp id from Player 'list'
+    delete Player.players[player.id];
+    player.id = parsed.data.id;
+    Player.players[player.id] = player;
 
-      playerBoard.addPlayer(user);
-      activePlayer = user;
+    playerBoard.addPlayer(player);
+    activePlayer = player;
+    playerBoard.redraw();
+
+  } else if (parsed.type === 'update') {
+    parsed.objects.forEach(function(elem) {
+      var player;
+      if(elem.id in playerBoard.players) {
+        player = playerBoard.players[elem.id];
+
+      } else {
+        player = new Player(elem.id);
+        playerBoard.addPlayer(player);
+      }
+      if('position' in elem) {
+        player.changePosition([elem.position.x, elem.position.y]);
+
+      } else if ('deleted' in elem) {
+        console.log(playerBoard)
+        console.log(player)
+        playerBoard.removePlayer(player);
+      }
+
       playerBoard.redraw();
-
-    } else if (parsed.type === 'update') {
-      parsed.objects.forEach(function(elem) {
-        var player;
-        if(elem.id in playerBoard.players) {
-          player = playerBoard.players[elem.id];
-
-        } else {
-          player = new User(elem.id);
-          playerBoard.addPlayer(player);
-        }
-        if('position' in elem) {
-          player.changePosition([elem.position.x, elem.position.y]);
-
-        } else if ('deleted' in elem) {
-          console.log(playerBoard)
-          console.log(player)
-          playerBoard.removePlayer(player);
-        }
-
-        playerBoard.redraw();
-      });
-    }
-
-  } else {
-    console.log("bad message: " + messageEvent.data);
+    });
   }
 };
 
-socket.onclose = function(e) {
+
+var socketCloseListener = function(e) {
   console.log('server connection closed...');
+  reconnectInterval = setInterval(function() {
+    console.log('trying to reconnect...');
+    socket = new WebSocket(socketAddress);
+    addSocketListeners(socket);
+
+  }, 2000);
 };
 
-socket.onerror = function(e) {
+var socketErrorListener = function(e) {
   console.log('error: ');
   console.log(e);
-}
+};
 
+var addSocketListeners = function(socket) {
+  socket.onopen = socketOpenListener;
+  socket.onmessage = socketMessageListener;
+  socket.onclose = socketCloseListener;
+  socket.onerror = socketErrorListener;
+};
+
+
+// initiate socket connection
+var reconnectInterval = null;
+var socketAddress = "ws://" + window.location.host + "/sockets";
+var socket = new WebSocket(socketAddress);
+addSocketListeners(socket);
+var sendMessage = function(message) {
+  socket.send(JSON.stringify(message));
+};
+
+var temp_ids = [];
 var text_element = document.getElementById('output');
 var canvas_element = document.getElementById('canvas-element');
 var parentDims = canvas_element.parentElement.getBoundingClientRect()
