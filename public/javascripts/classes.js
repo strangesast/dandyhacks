@@ -6,6 +6,7 @@ var Board = class Board {
     this.width = width;
     this.height = height;
     this.playerRadius = 20;
+    this.rendering = false;
 
     this.players = {};
 
@@ -16,7 +17,7 @@ var Board = class Board {
         _this.height = box.height;
         _this.canvas.width = box.width;
         _this.canvas.height = box.height;
-        _this.redraw()
+        window.requestAnimationFrame(_this.redraw.bind(_this));
       };
     }(this);
   }
@@ -26,9 +27,14 @@ var Board = class Board {
     ctx.fillStyle = 'grey';
     ctx.fillRect(0, 0, this.width, this.height);
     ctx.fillStyle = 'black';
-    for(var player_id in this.players) {
-      var player = this.players[player_id];
-      player.draw(ctx, this.playerRadius)
+    var players = this.players;
+    var done = Object.keys(players).reduce(function(prev, player_id, i, arr) {
+      var player = players[player_id];
+      var dist = player.draw(ctx);
+      return dist < 1.0 && prev;
+    }, true);
+    if(!done) {
+      window.requestAnimationFrame(this.redraw.bind(this));
     }
   }
 
@@ -49,7 +55,6 @@ var Board = class Board {
   movePlayerTo(player, position, absolute) {
     var curx = player.position.x;
     var cury = player.position.y;
-    console.log("current: " + [curx, cury]);
     var newx, newy;
     if(absolute) {
       newx = Math.min(Math.max(position[0], this.playerRadius), this.width-this.playerRadius);
@@ -73,22 +78,37 @@ var Player = class Player {
       tarx: 0,
       tary: 0
     }
+    this.radius = 20;
     this.maxFrequency = 100; // ms
     this.lastUpdateRequestedAt = 0;
     this.pendingUpdateRequest = null;
   }
 
-  draw(ctx, radius) {
+  draw(ctx) {
     if(this === activePlayer) {
       ctx.fillStyle = 'black';
     } else {
       ctx.fillStyle = 'darkgrey';
     }
+
     var x = this.position.x;
     var y = this.position.y;
+
     ctx.beginPath();
-    ctx.arc(x, y, radius, 0, 2*Math.PI);
-    ctx.fill()
+    ctx.arc(x, y, this.radius, 0, 2*Math.PI);
+    ctx.fill();
+
+    var delx = this.position.tarx - this.position.x;
+    var dely = this.position.tary - this.position.y;
+
+    this.position.x += delx/2;
+    this.position.y += dely/2;
+
+    return Math.sqrt(Math.pow(delx, 2) + Math.pow(dely, 2));
+  }
+
+  distanceToTarget() {
+    return Math.sqrt(Math.pow(this.position.x-this.position.tarx, 2) + Math.pow(this.position.y-this.position.tary, 2));
   }
 
   submitPositionChange(position) {
@@ -105,10 +125,9 @@ var Player = class Player {
   }
 
   changePosition(position) {
-    console.log("actual: " + position);
     //console.log("new position: " + position.join(", "));
-    this.position.x = Number(position[0]);
-    this.position.y = Number(position[1]);
+    this.position.tarx = Number(position[0]);
+    this.position.tary = Number(position[1]);
   }
 
   static generateRandomId() {

@@ -41,7 +41,7 @@ var socketMessageListener = function(messageEvent) {
 
     playerBoard.addPlayer(player);
     activePlayer = player;
-    playerBoard.redraw();
+    window.requestAnimationFrame(playerBoard.redraw.bind(playerBoard));
 
   } else if (parsed.type === 'update') {
     parsed.objects.forEach(function(elem) {
@@ -57,16 +57,13 @@ var socketMessageListener = function(messageEvent) {
         player.changePosition([elem.position.x, elem.position.y]);
 
       } else if ('deleted' in elem) {
-        console.log(playerBoard)
-        console.log(player)
         playerBoard.removePlayer(player);
       }
 
-      playerBoard.redraw();
+      window.requestAnimationFrame(playerBoard.redraw.bind(playerBoard));
     });
   }
 };
-
 
 var socketCloseListener = function(e) {
   console.log('server connection closed...');
@@ -74,7 +71,6 @@ var socketCloseListener = function(e) {
     console.log('trying to reconnect...');
     socket = new WebSocket(socketAddress);
     addSocketListeners(socket);
-
   }, 2000);
 };
 
@@ -89,7 +85,6 @@ var addSocketListeners = function(socket) {
   socket.onclose = socketCloseListener;
   socket.onerror = socketErrorListener;
 };
-
 
 // initiate socket connection
 var reconnectInterval = null;
@@ -111,16 +106,16 @@ document.onkeydown = function(key_event) {
   var keyCode = key_event.keyCode;
   if(keyCode === 37) {
     // left
-    playerBoard.movePlayerTo(activePlayer, [-10, 0], false);
+    playerBoard.movePlayerTo(activePlayer, [-20, 0], false);
   } else if(keyCode === 38) {
     // up
-    playerBoard.movePlayerTo(activePlayer, [0, -10], false);
+    playerBoard.movePlayerTo(activePlayer, [0, -20], false);
   } else if(keyCode === 39) {
     // right
-    playerBoard.movePlayerTo(activePlayer, [10, 0], false);
+    playerBoard.movePlayerTo(activePlayer, [20, 0], false);
   } else if(keyCode === 40) {
     // down
-    playerBoard.movePlayerTo(activePlayer, [0, 10], false);
+    playerBoard.movePlayerTo(activePlayer, [0, 20], false);
   }
 };
 
