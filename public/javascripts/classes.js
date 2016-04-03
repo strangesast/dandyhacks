@@ -36,10 +36,13 @@ var Board = class Board {
     }, true);
 
     this.obstacles.forEach(function(obstacle, i, arr) {
-      var pos = obstacle.draw(ctx);
-      if(pos[0] < 0) {
-        obstacle.draw(ctx, true);
-        this.obstacles.splice(i, 1);
+      obstacle.x -= 0.1
+      if(obstacle.x < 0) {
+        arr.splice(i, 1);
+      } else {
+        ctx.beginPath()
+        ctx.arc(obstacle.x, obstacle.y, 10, 0, Math.PI*2);
+        ctx.fill();
       }
     });
     if(!done || this.obstacles.length > 0) {
@@ -76,57 +79,10 @@ var Board = class Board {
   }
 }
 
-var Obstacle = class Obstacle {
-  constructor(initx, inity, radius, fillStyle) {
-    this.position = {'x': initx, 'y': inity};
-    this.radius = radius;
-    this.fillStyle = fillStyle || 'green';
-    this.path = Obstacle.createPath(initx, inity);
-  }
-
-  draw(ctx, cancel) {
-    var n = this.path.next(cancel);
-    if(!n) {
-      return;
-    }
-    var pos = n.value;
-
-    var x = pos[0],
-        y = pos[1];
-    
-    this.position.x = x;
-    this.position.y = y;
-
-    ctx.fillStyle = this.fillStyle;
-    ctx.beginPath();
-    ctx.arc(x, y, this.radius, 0, 2*Math.PI);
-    ctx.fill();
-
-    return pos;
-  }
-}
-
-Obstacle.createPath = function* (xinit, yinit){
-  var ti = Date.now();
-  var amp = Math.random()*10,
-      freq = Math.random()/100,
-      shft = Math.random()*10 - 5;
-
-  var func = function(ti) {
-    return [xinit-ti/100, yinit+(amp*Math.sin(freq*ti) + shft)];
-  }
-  while(true) {
-    var relt = Date.now() - ti;
-    var cancel = yield func(relt);
-    if(cancel) {
-      break;
-    }
-  }
-}
-
 var Player = class Player {
-  constructor(id) {
+  constructor(id, username) {
     this.id = id;
+    this.username = username || "unknown";
     this.ready = false;
     Player.players[this.id] = this;
     this.position = {
@@ -135,10 +91,11 @@ var Player = class Player {
       tarx: 0,
       tary: 0
     }
-    this.radius = 20;
+    this.radius = 15;
     this.maxFrequency = 50; // ms
     this.lastUpdateRequestedAt = 0;
     this.pendingUpdateRequest = null;
+    this.blobCount = 0;
   }
 
   draw(ctx) {
@@ -155,11 +112,14 @@ var Player = class Player {
     ctx.arc(x, y, this.radius, 0, 2*Math.PI);
     ctx.fill();
 
+    ctx.font = "10px Verdana";
+    ctx.fillText(this.username + " " + this.blobCount, x+2+this.radius, y);
+
     var delx = this.position.tarx - this.position.x;
     var dely = this.position.tary - this.position.y;
 
-    this.position.x += delx/2;
-    this.position.y += dely/2;
+    this.position.x += 2*delx/3;
+    this.position.y += 2*dely/3;
 
     return Math.sqrt(Math.pow(delx, 2) + Math.pow(dely, 2));
   }

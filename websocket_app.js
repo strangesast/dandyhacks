@@ -68,28 +68,16 @@ var handleMessage = function(ws_id, object) {
   if(object.type == 'init' && object.id) {
     return User.findById(object.id).then(function(result) {
       if(result) {
-        clients[ws_id][result._id] = user;
+        clients[ws_id][result._id] = result;
         return {
           'type': 'init',
           'data' : {
             'id' : result._id,
+            'username' : result.username
           }
         };
       }
     });
-  } else if (object.type == 'init' && object.temp_id) {
-    var user = new User();
-    return user.save().then(function(doc) {
-      clients[ws_id][user.id] = user;
-      return {
-        'type': 'init',
-        'data' : {
-          'id' : doc._id,
-          'old_id' : object.temp_id
-        }
-      };
-    });
-
   } else if (object.type == 'update') {
     // add current_position
     redis_client.hmset(object.id, object.position);
@@ -105,6 +93,11 @@ var handleMessage = function(ws_id, object) {
               return reject(err);
             }
             return resolve({'id': user_id, 'position' : object});
+          });
+        }).then(function(ob) {
+          return User.findById(ob.id).then(function(result) {
+            ob.username = result.username;
+            return ob;
           });
         });
       }));

@@ -8,21 +8,17 @@ var socketOpenListener = function(e) {
   console.log('socket opened!');
   // create player || use existing player from localStorage
   clearInterval(reconnectInterval);
-  var currentPlayer = localStorage.getItem("player");
-  initMessage = {'type' : 'init'};
+  var currentPlayerRaw = sessionStorage.getItem('activePlayer');
+  var currentPlayer = currentPlayerRaw ? JSON.parse(currentPlayerRaw) : null;
+
   if(currentPlayer) {
-    initMessage.id = currentPlayer;
-    new Player(currentPlayer);
-  } else if (activePlayer != null) {
-    initMessage.id = activePlayer.id
+    initMessage = {'type' : 'init', 'id' : currentPlayer._id};
+    player = new Player(currentPlayer._id, currentPlayer.username);
+    sendMessage(initMessage);
 
   } else {
-    temp_id = Player.generateRandomId();
-    temp_ids.push(temp_id);
-    initMessage.temp_id = temp_id;
-    new Player(temp_id);
+    window.location.hash = '/index';
   }
-  sendMessage(initMessage);
 };
 
 var socketMessageListener = function(messageEvent) {
@@ -37,9 +33,11 @@ var socketMessageListener = function(messageEvent) {
   }
   var player;
   if(parsed.type === 'init' && (player = Player.getPlayerById(parsed.data.id))) {
+    console.log("Name: " + parsed.name);
     // player exists already, you're good
 
   } else if (parsed.type === 'init' && (player = Player.getPlayerById(temp_ids.pop()))) {
+    console.log("Name: " + parsed.name);
     // swap out temp id from Player 'list'
     delete Player.players[player.id];
     player.id = parsed.data.id;
@@ -56,7 +54,7 @@ var socketMessageListener = function(messageEvent) {
         player = playerBoard.players[elem.id];
 
       } else {
-        player = new Player(elem.id);
+        player = new Player(elem.id, elem.username);
         playerBoard.addPlayer(player);
       }
       if('position' in elem) {
@@ -108,20 +106,15 @@ var initGame = function() {
   playerBoard = new Board(canvas_element, parentDims.width, parentDims.height);
   
   var activePlayerRaw = sessionStorage.getItem('activePlayer');
-  activePlayer = new Player(JSON.parse(activePlayerRaw)._id);
+  var activePlayerProps = JSON.parse(activePlayerRaw);
+  activePlayer = new Player(activePlayerProps._id, activePlayerProps.username);
   playerBoard.addPlayer(activePlayer);
 
-  var count = 5;
-  for(var i=0; i<count+1; i++) {
-    var ob = new Obstacle(canvas_element.width, canvas_element.height*i/count, 10*Math.random(), 'green');
-    playerBoard.obstacles.push(ob);
-  }
   setInterval(function() {
-    var ypos = Math.random()*canvas_element.height;
-    var xpos = canvas_element.width;
-    var ob = new Obstacle(xpos, ypos, 10*(0.2+Math.random()*0.8), 'green');
-    playerBoard.obstacles.push(ob);
-  }, 1000);
+    if(playerBoard.obstacles.length < 12) {
+      playerBoard.obstacles.push({x: canvas_element.width, y:(0.1+Math.random()*0.8)*canvas_element.height});
+    }
+  }, 500);
 
   playerBoard.redraw();
 
