@@ -23,16 +23,19 @@ var Board = class Board {
   }
 
   redraw() {
-    var ctx = this.canvas.getContext('2d');
-    ctx.fillStyle = 'grey';
-    ctx.fillRect(0, 0, this.width, this.height);
-    ctx.fillStyle = 'black';
+    //var ctx = this.canvas.getContext('2d');
+    //ctx.fillStyle = 'grey';
+    //ctx.fillRect(0, 0, this.width, this.height);
+    //ctx.fillStyle = 'black';
     var players = this.players;
     var done = Object.keys(players).reduce(function(prev, player_id, i, arr) {
       var player = players[player_id];
-      var dist = player.draw(ctx);
+      var dist = player.draw();
       return dist < 1.0 && prev;
     }, true);
+
+    three_access_point.render();
+
     if(!done) {
       window.requestAnimationFrame(this.redraw.bind(this));
     }
@@ -82,21 +85,38 @@ var Player = class Player {
     this.maxFrequency = 100; // ms
     this.lastUpdateRequestedAt = 0;
     this.pendingUpdateRequest = null;
+
+    this.droplet = dropletFactory();
   }
 
-  draw(ctx) {
-    if(this === activePlayer) {
-      ctx.fillStyle = 'black';
-    } else {
-      ctx.fillStyle = 'darkgrey';
-    }
+  //draw(ctx) {
+  //  if(this === activePlayer) {
+  //    ctx.fillStyle = 'black';
+  //  } else {
+  //    ctx.fillStyle = 'darkgrey';
+  //  }
 
+  //  var x = this.position.x;
+  //  var y = this.position.y;
+
+  //  ctx.beginPath();
+  //  ctx.arc(x, y, this.radius, 0, 2*Math.PI);
+  //  ctx.fill();
+
+  //  var delx = this.position.tarx - this.position.x;
+  //  var dely = this.position.tary - this.position.y;
+
+  //  this.position.x += delx/2;
+  //  this.position.y += dely/2;
+
+  //  return Math.sqrt(Math.pow(delx, 2) + Math.pow(dely, 2));
+  //}
+  
+  draw() {
     var x = this.position.x;
     var y = this.position.y;
 
-    ctx.beginPath();
-    ctx.arc(x, y, this.radius, 0, 2*Math.PI);
-    ctx.fill();
+    this.droplet.position.set(x,y,100);
 
     var delx = this.position.tarx - this.position.x;
     var dely = this.position.tary - this.position.y;
@@ -106,6 +126,7 @@ var Player = class Player {
 
     return Math.sqrt(Math.pow(delx, 2) + Math.pow(dely, 2));
   }
+
 
   distanceToTarget() {
     return Math.sqrt(Math.pow(this.position.x-this.position.tarx, 2) + Math.pow(this.position.y-this.position.tary, 2));
