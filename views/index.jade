@@ -1,10 +1,11 @@
 extends layout
 
-block content
-  span#output 1, 2, 3
-  .container
-    #canvas-container
-      canvas#canvas-element
+block head
+  link(rel='stylesheet', href='/stylesheets/index.css')
 
-  script(src="/javascripts/classes.js")
-  script(src="/javascripts/index.js")
+
+block content
+  .container
+    div
+      h1 Welcome to Droplett!
+      a(href="/game") Begin!
