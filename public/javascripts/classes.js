@@ -34,11 +34,15 @@ var Board = class Board {
       var dist = player.draw(ctx);
       return dist < 1.0 && prev;
     }, true);
-    for(var i=0; i < this.obstacles.length; i++) {
-      var obstacle = this.obstacles[i];
-      obstacle.draw();
-    }
-    if(!done) {
+
+    this.obstacles.forEach(function(obstacle, i, arr) {
+      var pos = obstacle.draw(ctx);
+      if(pos[0] < 0) {
+        obstacle.draw(ctx, true);
+        this.obstacles.splice(i, 1);
+      }
+    });
+    if(!done || this.obstacles.length > 0) {
       window.requestAnimationFrame(this.redraw.bind(this));
     }
   }
@@ -46,18 +50,6 @@ var Board = class Board {
   addPlayer(player) {
     // for now make last-added player default
     this.players[player.id] = player;
-  }
-
-  createObjectGenerator() {
-    return function(_this) {
-      return function* () {
-        var count = 1;
-        while (true) {
-          var obstacle = new Obstacle(_this.width, _this.height/2, -10, 'blue');
-          _this.obstacles.push(obstacle);
-        }
-      };
-    }(this);
   }
 
   removePlayer(player) {
@@ -85,27 +77,50 @@ var Board = class Board {
 }
 
 var Obstacle = class Obstacle {
-  constructor(initx, inity, radius, velocity, fillStyle) {
+  constructor(initx, inity, radius, fillStyle) {
     this.position = {'x': initx, 'y': inity};
     this.radius = radius;
     this.fillStyle = fillStyle || 'green';
-    this.velocity = velocity;
+    this.path = Obstacle.createPath(initx, inity);
   }
 
-  draw(ctx) {
-    var x = this.position.x;
-    var y = this.position.y;
+  draw(ctx, cancel) {
+    var n = this.path.next(cancel);
+    if(!n) {
+      return;
+    }
+    var pos = n.value;
+
+    var x = pos[0],
+        y = pos[1];
+    
+    this.position.x = x;
+    this.position.y = y;
 
     ctx.fillStyle = this.fillStyle;
     ctx.beginPath();
     ctx.arc(x, y, this.radius, 0, 2*Math.PI);
     ctx.fill();
 
-    var delx = this.position.tarx - this.position.x;
-    var dely = this.position.tary - this.position.y;
+    return pos;
+  }
+}
 
-    this.position.x += velocity;
-    this.position.y += velocity;
+Obstacle.createPath = function* (xinit, yinit){
+  var ti = Date.now();
+  var amp = Math.random()*10,
+      freq = Math.random()/100,
+      shft = Math.random()*10 - 5;
+
+  var func = function(ti) {
+    return [xinit-ti/100, yinit+(amp*Math.sin(freq*ti) + shft)];
+  }
+  while(true) {
+    var relt = Date.now() - ti;
+    var cancel = yield func(relt);
+    if(cancel) {
+      break;
+    }
   }
 }
 
@@ -154,7 +169,6 @@ var Player = class Player {
   }
 
   submitPositionChange(position) {
-    console.log(position);
     // limit update requests to 'maxFrequency' ms
     var delay = Math.max(this.lastUpdateRequestedAt + this.maxFrequency - Date.now(), 0);
 

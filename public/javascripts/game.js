@@ -111,6 +111,18 @@ var initGame = function() {
   activePlayer = new Player(JSON.parse(activePlayerRaw)._id);
   playerBoard.addPlayer(activePlayer);
 
+  var count = 5;
+  for(var i=0; i<count+1; i++) {
+    var ob = new Obstacle(canvas_element.width, canvas_element.height*i/count, 10*Math.random(), 'green');
+    playerBoard.obstacles.push(ob);
+  }
+  setInterval(function() {
+    var ypos = Math.random()*canvas_element.height;
+    var xpos = canvas_element.width;
+    var ob = new Obstacle(xpos, ypos, 10*(0.2+Math.random()*0.8), 'green');
+    playerBoard.obstacles.push(ob);
+  }, 1000);
+
   playerBoard.redraw();
 
   document.onkeydown = function(key_event) {

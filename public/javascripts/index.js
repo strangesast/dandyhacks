@@ -145,10 +145,10 @@ username_submit_form.onsubmit = function(e) {
     console.log(parsed);
     if('username' in parsed) {
       sessionStorage.setItem('activePlayer', JSON.stringify(parsed));
+      window.location.hash = "/play";
     } else {
       alert('unexpected result');
     }
-    window.location.hash = "/play";
   });
 
   return false;
