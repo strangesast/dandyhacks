@@ -2,10 +2,15 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var User = new Schema({
-  type: {
+  username: {
     type: String,
-    default: 'mobile'
+    required: true
+  },
+  profile: {
+    type: Number,
+    default: 1
   }
+
 }, {
   timestamps: true
 });

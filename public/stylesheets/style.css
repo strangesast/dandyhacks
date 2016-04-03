@@ -1,11 +1,227 @@
+@font-face {
+  font-family: "Open Sans";
+}
 html, body {
-  padding: 0;
-  margin: 0;
-  width: 100%;
   height: 100%;
+  padding: 0px;
+  margin: 0px;
+  font: 1em "Open Sans", sans-serif;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+}
+.loading-icon {
+  width: 100px;
+  height: 100px;
+}
+
+#ambience {
+  position: fixed;
+  z-index: 100;
+}
+
+.profile-heading {
+  text-align: center;
+  padding-bottom: 20px;
+}
+
+.profile-image-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.profile-image-container > .profile-image {
+  padding: 10px;
+  width: 140px;
+  height: 140px;
+  cursor: pointer;
+}
+
+.profile-image-container > input[type=radio] {
+  display: none;
+}
+
+.profile-image-container > input:checked + label {
+  background: cornflowerblue;
+  border-radius: 10px;
+}
+
+.profile-image-container > .profile-image > img {
+  padding: 10px;
+  width: 120px;
+  height: 120px;
+}
+
+.wrapper {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: darkgrey;
+  background-image: linear-gradient(to bottom, rgba(41,137,216,0.5) 0%,rgba(41,137,216,0.5) 34%,rgba(125,185,232,0.5) 100%), url("/images/noise.png");
+}
+
+.wrapper > .outer:not(:first-child) {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.wrapper.loading > .outer {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.wrapper > .outer {
+  opacity: 0;
+}
+
+.wrapper > .outer.transitioning {
+  visibility: visible;
+  display: flex;
+}
+
+.wrapper > .outer.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+.wrapper > .outer.transitioning > .inner {
+  transition: transform 0.5s ease;
+}
+
+.outer {
+  /* control position / maximum width & height */
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.5s ease;
+}
+
+.inner {
+  /* hold all page content */
+  /*background: lightblue;*/
+  max-height: 100%;
+  min-width: 300px;
+  display: flex;
+  flex-wrap: wrap;
+  flex-basis: 400px;
+  margin: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /*box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);*/
+  /*border-radius: 5px;*/
+}
+
+.inner > * {
+  /*box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);*/
+}
+
+.square {
+  width: 200px;
+  height: 200px;
+  margin: 10px;
+  font-size: 3em;
+  line-height: 200px;
+  vertical-align: middle;
+  text-align: center;
+  word-wrap: break-word;
+}
+
+#controls {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+}
+
+#keg-status {
+  position: fixed;
+  top: 0;
+  right: 0;
+  display: flex;
+}
+
+#keg-status > span {
+  padding: 10px;
+}
+
+.inner > .main {
+  padding: 20px;
+  font-size: 5em;
+  width: 100%;
+  color: rgba(0, 10, 50);
+}
+
+#option {
+  align-self: center;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#option > * {
+  margin: 10px 0px;
+}
+
+#count {
+  height: 220px;
+  line-height:220px;
+  font-size: 3em;
+  font-align: middle
+}
+
+#pass {
+  height: 50px;
+  font-size: 1.5em;
+}
+
+@media (max-width: 300px ){
+  .usernames {
+    max-width: 300px; 
+  }
+}
+
+.btn-file {
+  position: relative;
   overflow: hidden;
 }
 
+.btn-file input[type=file] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 100%;
+  min-height: 100%;
+  font-size: 100px;
+  text-align: right;
+  filter: alpha(opacity=0);
+  opacity: 0;
+  outline: none;
+  background: white;
+  cursor: inherit;
+  display: block;
+}
+
+.btn:focus {
+  outline: none;
+}
+
+#pour-loading {
+  width: 400px;
+  height: 400px;
+  background: white;
+}
+
+.list-heading {
+  width: 100%;
+}
 .container {
   display: flex;
   align-items: center;

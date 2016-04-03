@@ -121,7 +121,7 @@ var Player = class Player {
       tary: 0
     }
     this.radius = 20;
-    this.maxFrequency = 100; // ms
+    this.maxFrequency = 50; // ms
     this.lastUpdateRequestedAt = 0;
     this.pendingUpdateRequest = null;
   }
@@ -154,6 +154,7 @@ var Player = class Player {
   }
 
   submitPositionChange(position) {
+    console.log(position);
     // limit update requests to 'maxFrequency' ms
     var delay = Math.max(this.lastUpdateRequestedAt + this.maxFrequency - Date.now(), 0);
 

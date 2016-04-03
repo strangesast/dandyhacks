@@ -5,7 +5,40 @@ block head
 
 
 block content
-  .container
-    div
-      h1 Welcome to Droplett!
-      a(href="/game") Begin!
+  #wrapper.wrapper.loading
+    .outer(hash-url="index", static=true)
+      .inner
+        div
+          h1 Welcome to Droplett!
+          a.btn.btn-primary.btn-lg.btn-block(href="/#/game-setup") Begin!
+
+    .outer(hash-url="game-setup", static=true)
+      .inner
+        form.form-horizontal#username-submit-form
+          h2.profile-heading Choose a username and character!
+          .form-group.form-group-lg
+            label.col-sm-4.control-label(for="username") Username
+            .col-sm-8
+              input#username.form-control(type="text" placeholder="username" name="username")
+          .profile-image-container
+            input(id="profile1" type="radio" name="profile" value="1")
+            label.profile-image(for="profile1")
+              img(src="/images/profile1.png")
+            input(id="profile2" type="radio" name="profile" value="2")
+            label.profile-image(for="profile2")
+              img(src="/images/profile2.png")
+
+          button.btn.btn-primary.btn-lg.btn-block(type="submit") Submit
+
+    .outer(hash-url="loading")
+      .inner.loading-container
+        img.loading-icon(src="/images/progress.gif")
+
+    .outer(hash-url="play", static=true)
+      .inner#canvas-container
+        canvas#canvas-element
+
+block scripts
+  script(src='/javascripts/classes.js')
+  script(src='/javascripts/game.js')
+  script(src='/javascripts/index.js')

@@ -1,3 +1,9 @@
+var reconnectInterval = null;
+var socketAddress = "ws://" + window.location.host + "/sockets";
+var activePlayer = null;
+var playerBoard = null;
+var sendMessage;
+
 var socketOpenListener = function(e) {
   console.log('socket opened!');
   // create player || use existing player from localStorage
@@ -86,42 +92,47 @@ var addSocketListeners = function(socket) {
   socket.onerror = socketErrorListener;
 };
 
-// initiate socket connection
-var reconnectInterval = null;
-var socketAddress = "ws://" + window.location.host + "/sockets";
-var socket = new WebSocket(socketAddress);
-addSocketListeners(socket);
-var sendMessage = function(message) {
-  socket.send(JSON.stringify(message));
+var initGame = function() {
+  console.log('starting game code...');
+  // initiate socket connection
+  var socket = new WebSocket(socketAddress);
+  sendMessage = function(message) {
+    socket.send(JSON.stringify(message));
+  };
+  addSocketListeners(socket);
+  
+  var temp_ids = [];
+  var text_element = document.getElementById('output');
+  var canvas_element = document.getElementById('canvas-element');
+  var parentDims = canvas_element.parentElement.getBoundingClientRect();
+  playerBoard = new Board(canvas_element, parentDims.width, parentDims.height);
+  
+  var activePlayerRaw = sessionStorage.getItem('activePlayer');
+  activePlayer = new Player(JSON.parse(activePlayerRaw)._id);
+  playerBoard.addPlayer(activePlayer);
+
+  playerBoard.redraw();
+
+  document.onkeydown = function(key_event) {
+    var keyCode = key_event.keyCode;
+    if(keyCode === 37) {
+      // left
+      playerBoard.movePlayerTo(activePlayer, [-20, 0], false);
+    } else if(keyCode === 38) {
+      // up
+      playerBoard.movePlayerTo(activePlayer, [0, -20], false);
+    } else if(keyCode === 39) {
+      // right
+      playerBoard.movePlayerTo(activePlayer, [20, 0], false);
+    } else if(keyCode === 40) {
+      // down
+      playerBoard.movePlayerTo(activePlayer, [0, 20], false);
+    }
+  };
+  
+  window.addEventListener("deviceorientation", function(orientation_event) {
+    //text_element.textContent = [orientation_event.alpha, orientation_event.beta, orientation_event.gamma].join(', ');
+    var vals = [Math.round(orientation_event.gamma*10)/50, Math.round(orientation_event.beta*10)/50];
+    playerBoard.movePlayerTo(activePlayer, vals, false);
+  }, true);
 };
-
-var temp_ids = [];
-var text_element = document.getElementById('output');
-var canvas_element = document.getElementById('canvas-element');
-var parentDims = canvas_element.parentElement.getBoundingClientRect()
-var playerBoard = new Board(canvas_element, parentDims.width, parentDims.height);
-
-var activePlayer = null;
-document.onkeydown = function(key_event) {
-  var keyCode = key_event.keyCode;
-  if(keyCode === 37) {
-    // left
-    playerBoard.movePlayerTo(activePlayer, [-20, 0], false);
-  } else if(keyCode === 38) {
-    // up
-    playerBoard.movePlayerTo(activePlayer, [0, -20], false);
-  } else if(keyCode === 39) {
-    // right
-    playerBoard.movePlayerTo(activePlayer, [20, 0], false);
-  } else if(keyCode === 40) {
-    // down
-    playerBoard.movePlayerTo(activePlayer, [0, 20], false);
-  }
-};
-
-window.addEventListener("deviceorientation", function(orientation_event) {
-  //text_element.textContent = [orientation_event.alpha, orientation_event.beta, orientation_event.gamma].join(', ');
-  var vals = [Math.round(orientation_event.gamma*10)/50, Math.round(orientation_event.beta*10)/50];
-  text_element.textContent = vals;
-  playerBoard.movePlayerTo(activePlayer, vals, false);
-}, true);
