@@ -75,10 +75,21 @@ var User = class User {
       x: 0,
       y: 0
     }
+    this.maxFrequency = 100; // ms
+    this.lastUpdateRequestedAt = 0;
+    this.pendingUpdateRequest = null;
   }
   submitPositionChange(position) {
-    console.log("submit: " + position);
-    sendMessage({'id' : this.id, 'type' : 'update', 'position' : {'x':position[0], 'y':position[1]}});
+    // limit update requests to 'maxFrequency' ms
+    var delay = Math.max(this.lastUpdateRequestedAt + this.maxFrequency - Date.now(), 0);
+
+    clearTimeout(this.pendingUpdateRequest);
+    this.pendingUpdateRequest = function(_this) {
+      return setTimeout(function() {
+        _this.lastUpdateRequestedAt = Date.now();
+        sendMessage({'id' : _this.id, 'type' : 'update', 'position' : {'x':position[0], 'y':position[1]}});
+      }, delay);
+    }(this);
   }
 
   changePosition(position) {

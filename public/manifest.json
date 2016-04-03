@@ -1,0 +1,25 @@
+{
+  "name": "Droplett",
+  "description": "Droplett",
+  "version": "0.0.0.1",
+  "manifest_version": 2,
+  "icons": [
+    "images/icon.png"
+  ],
+  "app": {
+    "urls": [
+      "http://http://104.236.79.127:8081/"
+    ],
+    "launch": {
+      "web_url": "http://104.236.79.127:8081/"
+    }
+  },
+  "theme_color" : "#000000",
+  "display" : "standalone",
+  "orientation" : "portrait",
+  "kiosk_enabled": true,
+  "kiosk_only": true,
+  "permissions" : [
+    "fullscreen"
+  ]
+}

@@ -15,8 +15,8 @@ html, body {
 }
 
 #canvas-container {
-  width: 30%;
-  height: 30%;
+  width: 80%;
+  height: 80%;
   background: red;
 }
 
